@@ -1,0 +1,28 @@
+.form { display: flex; flex-direction: column; gap: 16px; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+
+.list { display: flex; flex-direction: column; gap: 12px; }
+.row {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.rowInfo { display: flex; flex-direction: column; gap: 4px; }
+.rowName { font-weight: 700; font-size: 1rem; }
+.rowMeta { font-size: 0.82rem; color: var(--muted); }
+.screenLink { font-size: 0.82rem; color: var(--gold); text-decoration: none; }
+.screenLink:hover { text-decoration: underline; }
+
+.rowActions { display: flex; gap: 8px; }
+
+@media (max-width: 600px) {
+  .twoCol { grid-template-columns: 1fr; }
+  .row { flex-direction: column; align-items: flex-start; }
+}

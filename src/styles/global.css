@@ -1,0 +1,141 @@
+/* ── Tokens ─────────────────────────────────────────────────── */
+:root {
+  --bg:       #0D0F1A;
+  --surface:  #1E2235;
+  --border:   #2E3456;
+  --gold:     #C9A84C;
+  --gold-dim: #8A6E2A;
+  --text:     #E8E2D5;
+  --muted:    #7B8BB5;
+  --danger:   #C94C4C;
+  --success:  #4CB87E;
+  --team1:    #4C8EC9;
+  --team2:    #C9784C;
+
+  --radius:   10px;
+  --radius-sm: 6px;
+  --font: 'Cairo', system-ui, sans-serif;
+}
+
+/* ── Reset ──────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  direction: rtl;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Typography ─────────────────────────────────────────────── */
+h1 { font-size: 2rem;   font-weight: 900; line-height: 1.2; }
+h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
+h3 { font-size: 1.15rem;font-weight: 600; }
+p  { line-height: 1.7; color: var(--muted); }
+
+/* ── Utility ────────────────────────────────────────────────── */
+.gold  { color: var(--gold); }
+.muted { color: var(--muted); }
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary  { background: var(--gold);    color: #0D0F1A; }
+.btn-ghost    { background: transparent;    color: var(--text);  border: 1px solid var(--border); }
+.btn-danger   { background: var(--danger);  color: #fff; }
+.btn-success  { background: var(--success); color: #fff; }
+
+.btn-primary:hover:not(:disabled)  { opacity: 0.88; }
+.btn-ghost:hover:not(:disabled)    { border-color: var(--gold); color: var(--gold); }
+.btn-danger:hover:not(:disabled)   { opacity: 0.85; }
+
+/* ── Card ───────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+/* ── Input ──────────────────────────────────────────────────── */
+.input, .select, .textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.95rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--gold);
+}
+.textarea { resize: vertical; min-height: 80px; }
+
+/* ── Badge ──────────────────────────────────────────────────── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.badge-easy   { background: rgba(76,184,126,.15); color: var(--success); }
+.badge-medium { background: rgba(201,168,76,.15);  color: var(--gold); }
+.badge-hard   { background: rgba(201,76,76,.15);   color: var(--danger); }
+
+/* ── Toast ──────────────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 24px;
+  font-weight: 600;
+  z-index: 9999;
+  animation: toastIn 0.2s ease;
+}
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ── Scrollbar ──────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  h1 { font-size: 1.5rem; }
+  h2 { font-size: 1.2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}

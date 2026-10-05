@@ -1,0 +1,234 @@
+/* Full-screen cinematic layout */
+.screen {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* ── Loading ────────────────────────────────────────────── */
+.loading {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  color: var(--muted);
+}
+.loadingIcon { font-size: 3rem; animation: pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.4 } }
+
+/* ── Header ─────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.headerLogo  { font-size: 1.3rem; font-weight: 900; color: var(--gold); }
+.headerEvent { font-size: 1.1rem; font-weight: 700; color: var(--text); }
+.headerStage { font-size: 1rem; color: var(--muted); }
+.stageNum    { font-size: 1.4rem; font-weight: 900; color: var(--gold); margin: 0 6px; }
+
+/* ── Progress dots ──────────────────────────────────────── */
+.progress {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  padding: 10px 0;
+  flex-shrink: 0;
+}
+.progressDot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background 0.3s;
+}
+.progressDotActive { background: var(--gold); transform: scale(1.4); }
+.progressDotDone   { background: var(--success); }
+
+/* ── Main ───────────────────────────────────────────────── */
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 260px 1fr 260px;
+  gap: 0;
+  align-items: stretch;
+  min-height: 0;
+}
+
+/* ── Team Card ──────────────────────────────────────────── */
+.teamCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 16px;
+  border-right: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: background 0.3s;
+}
+.teamCard:last-child { border-right: none; border-left: 1px solid var(--border); }
+.teamCardActive { background: rgba(255,255,255,0.025); }
+
+.teamName  { font-size: 1.4rem; font-weight: 900; text-align: center; }
+.teamScore { font-size: 5rem; font-weight: 900; color: var(--gold); line-height: 1; }
+.teamScoreLabel { font-size: 0.85rem; color: var(--muted); margin-top: -4px; }
+.teamStage { font-size: 0.9rem; color: var(--muted); }
+.teamLives { display: flex; gap: 6px; margin-top: 8px; }
+.heart     { font-size: 1.5rem; }
+
+.activePulse {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+/* ── Question area ──────────────────────────────────────── */
+.questionArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 40px;
+  overflow: hidden;
+}
+
+/* ── Waiting ────────────────────────────────────────────── */
+.waiting {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.waitingIcon {
+  font-size: 5rem;
+  opacity: 0.6;
+  animation: pulse 3s ease-in-out infinite;
+}
+.waiting p:first-of-type { font-size: 1.8rem; font-weight: 700; color: var(--gold); }
+
+/* ── Question box ───────────────────────────────────────── */
+.questionBox {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 700px;
+  animation: fadeUp 0.3s ease;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.qCategory {
+  font-size: 0.9rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.qDifficulty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.qPoints { font-size: 0.85rem; color: var(--gold); font-weight: 700; }
+
+.qText {
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* ── Options ────────────────────────────────────────────── */
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 8px;
+}
+.option {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: border-color 0.25s, background 0.25s;
+}
+.optionLetter {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.optionCorrect {
+  border-color: var(--success) !important;
+  background: rgba(76,184,126,0.12) !important;
+}
+.optionCorrect .optionLetter { background: var(--success); color: #fff; }
+
+/* ── TF ─────────────────────────────────────────────────── */
+.tfOptions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 8px;
+}
+.tfOption {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  transition: border-color 0.25s, background 0.25s;
+}
+
+/* ── Answer reveal ──────────────────────────────────────── */
+.answerReveal {
+  background: rgba(76,184,126,0.12);
+  border: 2px solid var(--success);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--success);
+  text-align: center;
+  animation: fadeUp 0.25s ease;
+}
+
+/* ── Turn bar ───────────────────────────────────────────── */
+.turnBar {
+  text-align: center;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+  .main { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
+  .teamCard { flex-direction: row; justify-content: space-around; padding: 16px; border: none; border-bottom: 1px solid var(--border); }
+  .teamCard:last-child { border-top: 1px solid var(--border); border-left: none; }
+  .teamScore { font-size: 3rem; }
+  .qText { font-size: 1.2rem; }
+  .options { grid-template-columns: 1fr; }
+}
