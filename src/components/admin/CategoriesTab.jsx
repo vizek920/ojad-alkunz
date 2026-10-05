@@ -1,89 +1,88 @@
 import { useState, useEffect } from 'react'
 import { categoriesAPI } from '../../lib/api'
-import styles from './CategoriesTab.module.css'
-
-const BLANK = { name_ar: '', name_en: '', icon: '📚' }
+import s from './CategoriesTab.module.css'
 
 export default function CategoriesTab() {
-  const [categories, setCategories] = useState([])
-  const [form, setForm] = useState(BLANK)
-  const [editing, setEditing] = useState(null)
-  const [saving, setSaving] = useState(false)
-
-  useEffect(() => { load() }, [])
+  const [cats,    setCats]    = useState([])
+  const [loading, setLoading] = useState(true)
+  const [name,    setName]    = useState('')
+  const [saving,  setSaving]  = useState(false)
+  const [editId,  setEditId]  = useState(null)
+  const [editName,setEditName]= useState('')
 
   async function load() {
+    setLoading(true)
     const data = await categoriesAPI.list()
-    setCategories(data)
+    setCats(data || [])
+    setLoading(false)
   }
+  useEffect(() => { load() }, [])
 
-  async function save(e) {
+  async function handleAdd(e) {
     e.preventDefault()
+    if (!name.trim()) return
     setSaving(true)
-    try {
-      if (editing) {
-        await categoriesAPI.update(editing, form)
-      } else {
-        await categoriesAPI.create(form)
-      }
-      setForm(BLANK)
-      setEditing(null)
-      await load()
-    } catch(err) { alert(err.message) }
-    finally { setSaving(false) }
+    await categoriesAPI.create({ name: name.trim() })
+    setName('')
+    await load()
+    setSaving(false)
   }
 
-  async function del(id) {
-    if (!confirm('حذف هذا التصنيف؟')) return
+  async function handleEdit(id) {
+    setSaving(true)
+    await categoriesAPI.update(id, { name: editName })
+    setEditId(null)
+    await load()
+    setSaving(false)
+  }
+
+  async function handleDelete(id) {
+    if (!confirm('حذف هذه الفئة؟')) return
     await categoriesAPI.delete(id)
-    setCategories(c => c.filter(x => x.id !== id))
+    await load()
   }
 
   return (
     <div>
-      <h2 style={{marginBottom:24}}>التصنيفات</h2>
+      <h2 className={s.heading}>📂 الفئات</h2>
 
-      <div className="card" style={{marginBottom:28}}>
-        <h3 style={{marginBottom:16}}>{editing ? 'تعديل تصنيف' : 'تصنيف جديد'}</h3>
-        <form onSubmit={save} className={styles.form}>
-          <input className="input" style={{width:64}} placeholder="🏷" value={form.icon}
-            onChange={e => setForm(f => ({...f, icon: e.target.value}))} maxLength={4} />
-          <input className="input" placeholder="الاسم بالعربية" value={form.name_ar}
-            onChange={e => setForm(f => ({...f, name_ar: e.target.value}))} required />
-          <input className="input" placeholder="الاسم بالإنجليزية (اختياري)" value={form.name_en}
-            onChange={e => setForm(f => ({...f, name_en: e.target.value}))} />
-          <div style={{display:'flex', gap:10}}>
-            <button className="btn btn-primary" type="submit" disabled={saving}>
-              {saving ? '...' : editing ? 'حفظ' : 'إضافة'}
-            </button>
-            {editing && (
-              <button className="btn btn-ghost" type="button" onClick={() => { setEditing(null); setForm(BLANK) }}>
-                إلغاء
-              </button>
-            )}
-          </div>
+      <div className={`card card-gold ${s.addCard}`}>
+        <h3 style={{color:'var(--gold)',marginBottom:14}}>➕ فئة جديدة</h3>
+        <form onSubmit={handleAdd} className={s.addForm}>
+          <input className="input" placeholder="اسم الفئة…" value={name}
+            onChange={e=>setName(e.target.value)} required />
+          <button className="btn btn-primary" disabled={saving}>حفظ</button>
         </form>
       </div>
 
-      <div className={styles.grid}>
-        {categories.map(c => (
-          <div key={c.id} className={styles.catCard}>
-            <span className={styles.catIcon}>{c.icon}</span>
-            <span className={styles.catName}>{c.name_ar}</span>
-            {c.name_en && <span className={styles.catEn}>{c.name_en}</span>}
-            <div className={styles.catActions}>
-              <button className="btn btn-ghost" style={{padding:'4px 10px',fontSize:'0.8rem'}}
-                onClick={() => { setForm({name_ar:c.name_ar,name_en:c.name_en||'',icon:c.icon||''}); setEditing(c.id) }}>
-                تعديل
-              </button>
-              <button className="btn btn-danger" style={{padding:'4px 10px',fontSize:'0.8rem'}}
-                onClick={() => del(c.id)}>
-                حذف
-              </button>
+      {loading ? (
+        <p style={{color:'var(--muted)',textAlign:'center',padding:24}}>⏳ تحميل…</p>
+      ) : (
+        <div className={s.grid}>
+          {cats.map(c => (
+            <div key={c.id} className={`card ${s.catCard}`}>
+              {editId === c.id ? (
+                <div className={s.editRow}>
+                  <input className="input" value={editName}
+                    onChange={e=>setEditName(e.target.value)} autoFocus />
+                  <button className="btn btn-success" onClick={()=>handleEdit(c.id)} disabled={saving}>✓</button>
+                  <button className="btn btn-ghost" onClick={()=>setEditId(null)}>✕</button>
+                </div>
+              ) : (
+                <>
+                  <span className={s.catName}>📁 {c.name}</span>
+                  <div className={s.catActions}>
+                    <button className="btn btn-ghost" style={{padding:'6px 10px'}}
+                      onClick={()=>{ setEditId(c.id); setEditName(c.name) }}>✏️</button>
+                    <button className="btn btn-danger" style={{padding:'6px 10px'}}
+                      onClick={()=>handleDelete(c.id)}>🗑️</button>
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
