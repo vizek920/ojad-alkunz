@@ -6,21 +6,22 @@ import { useAuth } from './hooks/useAuth'
 
 function ProtectedRoute({ children }) {
   const { isAdmin } = useAuth()
-  return isAdmin ? children : <Navigate to="/login" replace />
+  return isAdmin ? children : <Navigate to="/admin-kanz/login" replace />
 }
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/admin-kanz/login" element={<LoginPage />} />
         <Route path="/screen/:sessionId" element={<BigScreenPage />} />
-        <Route path="/admin/*" element={
+        <Route path="/admin-kanz/*" element={
           <ProtectedRoute>
             <AdminPage />
           </ProtectedRoute>
         } />
-        <Route path="/" element={<Navigate to="/admin" replace />} />
+        <Route path="/" element={<Navigate to="/admin-kanz/login" replace />} />
+        <Route path="/admin-kanz" element={<Navigate to="/admin-kanz/sessions" replace />} />
       </Routes>
     </BrowserRouter>
   )
