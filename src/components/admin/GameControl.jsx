@@ -2,259 +2,246 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { sessionsAPI, questionsAPI } from '../../lib/api'
 import { supabase } from '../../lib/supabase'
-import styles from './GameControl.module.css'
+import s from './GameControl.module.css'
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+const DIFF_AR = { easy:'سهل', medium:'متوسط', hard:'صعب' }
+const DIFF_PTS = { easy:1, medium:2, hard:3 }
 
 export default function GameControl() {
-  const { sessionId } = useParams()
-  const navigate = useNavigate()
-  const [session, setSession] = useState(null)
-  const [teams, setTeams] = useState({ team1: null, team2: null })
-  const [stages, setStages] = useState([])
-  const [questions, setQuestions] = useState([])
-  const [selectedQ, setSelectedQ] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const { id }     = useParams()
+  const navigate   = useNavigate()
 
-  const load = useCallback(async () => {
-    const data = await sessionsAPI.get(sessionId)
-    setSession(data)
-    const t1 = data.session_teams.find(t => t.team_key === 'team1')
-    const t2 = data.session_teams.find(t => t.team_key === 'team2')
-    setTeams({ team1: t1, team2: t2 })
-    setStages(data.session_stages.sort((a,b) => a.stage_number - b.stage_number))
-    setLoading(false)
-  }, [sessionId])
+  const [session,   setSession]   = useState(null)
+  const [teams,     setTeams]     = useState([])
+  const [questions, setQuestions] = useState([])   // full shuffled bank
+  const [usedIds,   setUsedIds]   = useState(new Set())
+  const [question,  setQuestion]  = useState(null)
+  const [revealed,  setRevealed]  = useState(false)
+  const [loading,   setLoading]   = useState(true)
+  const [activeTeam,setActiveTeam]= useState(0)    // 0 = team1, 1 = team2
+  const [doubleUsed,setDoubleUsed]= useState(false)
 
-  useEffect(() => { load() }, [load])
-
-  // Realtime subscription
+  // Load session + questions once
   useEffect(() => {
-    const ch = supabase.channel(`session:${sessionId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions', filter: `id=eq.${sessionId}` },
-        () => load())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'session_teams', filter: `session_id=eq.${sessionId}` },
-        () => load())
+    async function init() {
+      const [sess, qList] = await Promise.all([
+        sessionsAPI.get(id),
+        questionsAPI.list({ limit: 500 })
+      ])
+      setSession(sess)
+      setTeams(sess?.session_teams || [])
+      setQuestions(shuffle(qList || []))
+      setLoading(false)
+    }
+    init()
+  }, [id])
+
+  // Realtime subscription — keep local state in sync
+  useEffect(() => {
+    const ch = supabase.channel(`gc-${id}`)
+      .on('postgres_changes', { event:'*', schema:'public', table:'sessions', filter:`id=eq.${id}` },
+        p => setSession(prev => ({...prev, ...p.new})))
+      .on('postgres_changes', { event:'*', schema:'public', table:'session_teams', filter:`session_id=eq.${id}` },
+        p => setTeams(prev => prev.map(t => t.id === p.new.id ? {...t,...p.new} : t)))
       .subscribe()
     return () => supabase.removeChannel(ch)
-  }, [sessionId, load])
+  }, [id])
 
-  async function loadStageQuestions(stage) {
-    const data = await questionsAPI.forStage(stage)
-    setQuestions(data)
+  // Pick next question (random, non-repeated)
+  function pickQuestion() {
+    const available = questions.filter(q => !usedIds.has(q.id))
+    if (available.length === 0) return null
+    return available[Math.floor(Math.random() * available.length)]
   }
 
-  async function pushState(updates) {
-    setSaving(true)
-    try {
-      await sessionsAPI.updateState(sessionId, updates)
-      await load()
-    } finally { setSaving(false) }
-  }
-
-  async function setQuestion(q) {
-    setSelectedQ(q)
-    await pushState({ current_question_id: q.id, show_question: true, show_answer: false })
+  function drawQuestion() {
+    const q = pickQuestion()
+    if (!q) { alert('انتهت جميع الأسئلة!'); return }
+    setQuestion(q)
+    setRevealed(false)
+    setDoubleUsed(false)
+    setUsedIds(prev => new Set([...prev, q.id]))
+    // Push to session so BigScreen shows it
+    sessionsAPI.update(id, {
+      current_question: q,
+      question_state: 'active',
+      active_team: activeTeam,
+    })
   }
 
   async function revealAnswer() {
-    await pushState({ show_answer: true })
+    setRevealed(true)
+    await sessionsAPI.update(id, { question_state: 'revealed' })
   }
 
-  async function nextTurn() {
-    const nextTurn = session.current_turn === 'team1' ? 'team2' : 'team1'
-    await pushState({ current_turn: nextTurn, show_question: false, show_answer: false, current_question_id: null })
-  }
-
-  async function updateTeamScore(teamKey, delta) {
-    const team = teams[teamKey]
-    await sessionsAPI.updateTeam(sessionId, teamKey, { score: Math.max(0, team.score + delta) })
-    await load()
-  }
-
-  async function updateLives(teamKey, delta) {
-    const currentStage = stages[session.current_stage - 1]
-    const livesKey = `${teamKey}_lives`
-    const newLives = Math.max(0, Math.min(2, (currentStage[livesKey]) + delta))
-    await sessionsAPI.updateStage(sessionId, session.current_stage, { [livesKey]: newLives })
-    await load()
+  async function awardPoints(teamIdx, correct) {
+    if (!question) return
+    const team = teams[teamIdx]
+    if (!team) return
+    let pts = correct ? (question.points || DIFF_PTS[question.difficulty] || 1) : 0
+    if (correct && doubleUsed) pts *= 2
+    const newScore = (team.score || 0) + pts
+    await sessionsAPI.updateTeam(team.id, { score: newScore })
+    setTeams(prev => prev.map((t,i) => i===teamIdx ? {...t, score: newScore} : t))
+    // Wrong answer = lose a life in current stage
+    if (!correct) {
+      const lives = (team.current_lives ?? 2) - 1
+      await sessionsAPI.updateTeam(team.id, { current_lives: Math.max(0, lives) })
+      setTeams(prev => prev.map((t,i) => i===teamIdx ? {...t, current_lives: Math.max(0, lives)} : t))
+    }
+    setQuestion(null)
+    setRevealed(false)
+    setActiveTeam(teamIdx === 0 ? 1 : 0)
+    await sessionsAPI.update(id, { question_state: 'waiting', current_question: null })
   }
 
   async function nextStage() {
-    if (session.current_stage >= session.total_stages) return
-    const next = session.current_stage + 1
-    await pushState({ current_stage: next, show_question: false, show_answer: false, current_question_id: null })
-    setQuestions([])
-    setSelectedQ(null)
+    const nextStg = (session?.current_stage || 1) + 1
+    if (nextStg > 15) {
+      await sessionsAPI.update(id, { status: 'finished' })
+      return
+    }
+    await sessionsAPI.update(id, { current_stage: nextStg })
+    // Reset lives for both teams
+    for (const t of teams) {
+      await sessionsAPI.updateTeam(t.id, { current_lives: 2 })
+    }
+    setTeams(prev => prev.map(t => ({...t, current_lives: 2})))
+    setDoubleUsed(false)
+    setQuestion(null)
+    setRevealed(false)
   }
 
-  if (loading) return <p className="muted" style={{padding:32}}>جارٍ التحميل...</p>
+  async function toggleStatus() {
+    const next = session?.status === 'active' ? 'waiting' : 'active'
+    await sessionsAPI.update(id, { status: next })
+    setSession(prev => ({...prev, status: next}))
+  }
 
-  const currentStage = stages[session.current_stage - 1]
-  const bigScreenUrl = `${window.location.origin}/screen/${sessionId}`
+  if (loading) return <div className={s.loading}>⏳ تحميل الجلسة…</div>
+  if (!session) return <div className={s.loading}>❌ الجلسة غير موجودة</div>
+
+  const t1 = teams[0] || {}
+  const t2 = teams[1] || {}
 
   return (
-    <div className={styles.page}>
-      {/* Header */}
-      <div className={styles.header}>
-        <div>
-          <button className="btn btn-ghost" style={{marginBottom:8}} onClick={() => navigate('/admin')}>← رجوع</button>
-          <h2>{session.event_name}</h2>
-        </div>
-        <div className={styles.headerActions}>
-          <a href={bigScreenUrl} target="_blank" rel="noreferrer" className="btn btn-ghost">🖥 الشاشة الكبيرة</a>
-          <div className={`badge ${session.status === 'active' ? 'badge-easy' : 'badge-medium'}`}
-            style={{padding:'8px 16px', fontSize:'0.9rem'}}>
-            {session.status === 'waiting' ? 'انتظار' : session.status === 'active' ? 'جارية' : 'منتهية'}
-          </div>
+    <div className={s.page}>
+      {/* Top bar */}
+      <div className={s.topBar}>
+        <button className="btn btn-ghost" onClick={()=>navigate('/admin-kanz/sessions')}>← رجوع</button>
+        <h2 className={s.eventName}>{session.event_name}</h2>
+        <div className={s.topRight}>
+          <span className={s.stageLabel}>المرحلة <strong>{session.current_stage}</strong> / 15</span>
+          <a className="btn btn-ghost" href={`/screen/${id}`} target="_blank" rel="noreferrer">📺 شاشة</a>
+          <button className={`btn ${session.status==='active'?'btn-danger':'btn-success'}`} onClick={toggleStatus}>
+            {session.status==='active' ? '⏸ إيقاف' : '▶️ تشغيل'}
+          </button>
         </div>
       </div>
 
-      <div className={styles.grid}>
-        {/* Team 1 */}
-        <TeamPanel
-          team={teams.team1}
-          stage={currentStage}
-          teamKey="team1"
-          isActive={session.current_turn === 'team1'}
-          onScoreDelta={d => updateTeamScore('team1', d)}
-          onLivesDelta={d => updateLives('team1', d)}
-        />
-
-        {/* Stage control */}
-        <div className={styles.center}>
-          <div className="card" style={{marginBottom:16}}>
-            <div className={styles.stageLine}>
-              <span className="muted">المرحلة</span>
-              <span style={{fontSize:'2rem', fontWeight:900, color:'var(--gold)'}}>{session.current_stage}</span>
-              <span className="muted">/ {session.total_stages}</span>
-            </div>
-            <div className={styles.stageProgress}>
-              {stages.map(s => (
-                <div key={s.stage_number}
-                  className={`${styles.stageDot}
-                    ${s.stage_number === session.current_stage ? styles.stageDotActive : ''}
-                    ${s.status === 'finished' ? styles.stageDotDone : ''}`} />
+      {/* Teams scores */}
+      <div className={s.teams}>
+        {[t1,t2].map((t,i)=>(
+          <div key={i} className={`card ${s.teamCard} ${activeTeam===i ? s.teamActive : ''}`}>
+            <div className={s.teamColor} style={{background: i===0?'var(--team1)':'var(--team2)'}} />
+            <h3 className={s.teamName} style={{color: i===0?'var(--team1)':'var(--team2)'}}>{t.team_name}</h3>
+            <div className={s.teamScore}>{t.score || 0}</div>
+            <div className={s.teamLives}>
+              {Array.from({length:2}).map((_,li)=>(
+                <span key={li} className={li < (t.current_lives??2) ? s.heartFull : s.heartEmpty}>
+                  {li < (t.current_lives??2) ? '❤️' : '🖤'}
+                </span>
               ))}
             </div>
+            {activeTeam===i && <span className={s.turnBadge}>دوره الآن</span>}
           </div>
+        ))}
+      </div>
 
-          {/* Turn indicator */}
-          <div className="card" style={{marginBottom:16, textAlign:'center'}}>
-            <p className="muted" style={{marginBottom:4, fontSize:'0.85rem'}}>الدور الحالي</p>
-            <span style={{fontWeight:700, fontSize:'1.1rem',
-              color: session.current_turn === 'team1' ? 'var(--team1)' : 'var(--team2)'}}>
-              {session.current_turn === 'team1' ? teams.team1?.name : teams.team2?.name}
-            </span>
+      {/* Question area */}
+      <div className={`card card-gold ${s.qArea}`}>
+        {!question ? (
+          <div className={s.noQ}>
+            <span className={s.noQIcon}>🎲</span>
+            <p>اضغط لسحب سؤال عشوائي</p>
+            <button className="btn btn-primary" style={{fontSize:'1.1rem',padding:'12px 32px'}} onClick={drawQuestion}>
+              🎯 سحب سؤال
+            </button>
+            <p className={s.bankInfo}>متبقي: {questions.filter(q=>!usedIds.has(q.id)).length} / {questions.length} سؤال</p>
           </div>
-
-          {/* Controls */}
-          <div className={styles.controls}>
-            {!session.show_question && (
-              <button className="btn btn-primary" style={{width:'100%'}}
-                onClick={() => { loadStageQuestions(session.current_stage) }}>
-                عرض أسئلة المرحلة
-              </button>
-            )}
-            {session.show_question && !session.show_answer && (
-              <button className="btn btn-success" style={{width:'100%'}} onClick={revealAnswer} disabled={saving}>
-                كشف الإجابة
-              </button>
-            )}
-            {session.show_answer && (
-              <>
-                <button className="btn btn-ghost" style={{width:'100%'}} onClick={nextTurn} disabled={saving}>
-                  تبديل الدور
-                </button>
-                <button className="btn btn-primary" style={{width:'100%'}} onClick={nextStage} disabled={saving || session.current_stage >= session.total_stages}>
-                  المرحلة التالية ←
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Current question preview */}
-          {selectedQ && (
-            <div className="card" style={{marginTop:16, borderColor:'var(--gold)'}}>
-              <p style={{fontWeight:600, fontSize:'0.9rem', marginBottom:8}}>{selectedQ.text}</p>
-              {session.show_answer && (
-                <p style={{color:'var(--success)', fontWeight:700}}>✓ {selectedQ.correct_answer}</p>
-              )}
+        ) : (
+          <div className={s.qBox}>
+            <div className={s.qMeta}>
+              <span className={`badge badge-${question.difficulty}`}>{DIFF_AR[question.difficulty]}</span>
+              <span className={s.qPts}>⭐ {question.points || DIFF_PTS[question.difficulty]} نقطة</span>
+              {question.categories?.name && <span className={s.qCat}>📂 {question.categories.name}</span>}
             </div>
-          )}
-        </div>
+            <p className={s.qText}>{question.text}</p>
 
-        {/* Team 2 */}
-        <TeamPanel
-          team={teams.team2}
-          stage={currentStage}
-          teamKey="team2"
-          isActive={session.current_turn === 'team2'}
-          onScoreDelta={d => updateTeamScore('team2', d)}
-          onLivesDelta={d => updateLives('team2', d)}
-        />
-      </div>
+            {question.type === 'mcq' && question.options?.length > 0 && (
+              <div className={s.opts}>
+                {question.options.map((o,i)=>(
+                  <div key={i} className={`${s.opt} ${revealed && o===question.answer ? s.optCorrect : ''}`}>
+                    <span className={s.optLetter}>{['أ','ب','ج','د'][i]}</span>
+                    <span>{o}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {question.type === 'true_false' && (
+              <div className={s.tfRow}>
+                <div className={`${s.tf} ${revealed && question.answer==='true' ? s.optCorrect : ''}`}>✓ صح</div>
+                <div className={`${s.tf} ${revealed && question.answer==='false' ? s.optCorrect : ''}`}>✗ خطأ</div>
+              </div>
+            )}
+            {revealed && question.answer && (
+              <div className={s.answerReveal}>✅ الإجابة: {question.answer}</div>
+            )}
 
-      {/* Questions panel */}
-      {questions.length > 0 && (
-        <div className={styles.questionPanel}>
-          <h3 style={{marginBottom:16}}>أسئلة المرحلة {session.current_stage}</h3>
-          <div className={styles.questionList}>
-            {questions.map(q => (
-              <button key={q.id} className={`${styles.qBtn} ${selectedQ?.id === q.id ? styles.qBtnActive : ''}`}
-                onClick={() => setQuestion(q)}>
-                <span className={`badge badge-${q.difficulty}`} style={{marginLeft:8}}>
-                  {{ easy:'سهل', medium:'متوسط', hard:'صعب'}[q.difficulty]}
-                </span>
-                {q.text.length > 60 ? q.text.slice(0,60) + '...' : q.text}
+            <div className={s.qActions}>
+              {!revealed && (
+                <button className="btn btn-ghost" onClick={revealAnswer}>👁 كشف الإجابة</button>
+              )}
+              {!doubleUsed && (
+                <button className="btn btn-ghost" onClick={()=>setDoubleUsed(true)}>×2 مضاعفة</button>
+              )}
+              {doubleUsed && <span className={s.doubleBadge}>×2 فعّال</span>}
+            </div>
+
+            <div className={s.awardRow}>
+              <p className={s.awardLabel}>من أجاب بشكل صحيح؟</p>
+              {[t1,t2].map((t,i)=>(
+                <div key={i} className={s.awardBtns}>
+                  <button className="btn btn-success" onClick={()=>awardPoints(i,true)}>
+                    ✓ {t.team_name}
+                  </button>
+                  <button className="btn btn-danger" onClick={()=>awardPoints(i,false)}>
+                    ✗ {t.team_name}
+                  </button>
+                </div>
+              ))}
+              <button className="btn btn-ghost" onClick={()=>{ setQuestion(null); setRevealed(false) }}>
+                تخطي ⏭
               </button>
-            ))}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function TeamPanel({ team, stage, teamKey, isActive, onScoreDelta, onLivesDelta }) {
-  if (!team || !stage) return null
-  const lives = stage[`${teamKey}_lives`] ?? 2
-  const stageScore = stage[`${teamKey}_stage_score`] ?? 0
-
-  return (
-    <div className={`${styles.teamPanel} ${isActive ? styles.teamActive : ''}`}
-      style={{ borderColor: isActive ? (teamKey === 'team1' ? 'var(--team1)' : 'var(--team2)') : 'var(--border)' }}>
-      <div className={styles.teamName}
-        style={{ color: teamKey === 'team1' ? 'var(--team1)' : 'var(--team2)' }}>
-        {team.name}
-        {isActive && <span className={styles.turnBadge}>الدور</span>}
+        )}
       </div>
 
-      {/* Total score */}
-      <div className={styles.scoreBox}>
-        <span className="muted" style={{fontSize:'0.8rem'}}>النقاط الإجمالية</span>
-        <span className={styles.scoreNum}>{team.score}</span>
-        <div className={styles.scoreButtons}>
-          <button className="btn btn-ghost" style={{padding:'4px 12px'}} onClick={() => onScoreDelta(-1)}>−</button>
-          <button className="btn btn-primary" style={{padding:'4px 12px'}} onClick={() => onScoreDelta(1)}>+</button>
-        </div>
-      </div>
-
-      {/* Stage score */}
-      <div style={{textAlign:'center', marginBottom:12}}>
-        <span className="muted" style={{fontSize:'0.8rem'}}>نقاط المرحلة: </span>
-        <span style={{fontWeight:700}}>{stageScore}</span>
-      </div>
-
-      {/* Lives */}
-      <div className={styles.livesBox}>
-        <span className="muted" style={{fontSize:'0.8rem'}}>الأرواح</span>
-        <div className={styles.hearts}>
-          {[0,1].map(i => <span key={i}>{i < lives ? '❤️' : '🖤'}</span>)}
-        </div>
-        <div className={styles.livesBtns}>
-          <button className="btn btn-ghost" style={{padding:'3px 10px',fontSize:'0.8rem'}} onClick={() => onLivesDelta(-1)}>−</button>
-          <button className="btn btn-ghost" style={{padding:'3px 10px',fontSize:'0.8rem'}} onClick={() => onLivesDelta(1)}>+</button>
-        </div>
+      {/* Stage control */}
+      <div className={s.stageBar}>
+        <button className="btn btn-primary" onClick={nextStage}>
+          {session.current_stage >= 15 ? '🏆 إنهاء اللعبة' : `التالية → المرحلة ${(session.current_stage||1)+1}`}
+        </button>
       </div>
     </div>
   )
