@@ -20,39 +20,41 @@ async function request(method, path, body) {
 
 // Auth
 export const authAPI = {
-  login: (password) => request('POST', '/api/auth/login', { password }),
-  verify: () => request('GET', '/api/auth/verify')
+  login:  (password) => request('POST', '/api/auth/login', { password }),
+  verify: ()         => request('GET',  '/api/auth/verify')
 }
 
 // Categories
 export const categoriesAPI = {
-  list: () => request('GET', '/api/categories'),
-  create: (data) => request('POST', '/api/categories', data),
-  update: (id, data) => request('PUT', `/api/categories/${id}`, data),
-  delete: (id) => request('DELETE', `/api/categories/${id}`)
+  list:   ()         => request('GET',    '/api/categories'),
+  create: (data)     => request('POST',   '/api/categories', data),
+  update: (id, data) => request('PUT',    `/api/categories/${id}`, data),
+  delete: (id)       => request('DELETE', `/api/categories/${id}`)
 }
 
-// Questions
+// Questions  (no forStage — questions are always random from the full bank)
 export const questionsAPI = {
-  list: (params = {}) => {
+  list:   (params = {}) => {
     const q = new URLSearchParams(params).toString()
     return request('GET', `/api/questions${q ? '?' + q : ''}`)
   },
-  forStage: (stage) => request('GET', `/api/questions/for-stage/${stage}`),
-  get: (id) => request('GET', `/api/questions/${id}`),
-  create: (data) => request('POST', '/api/questions', data),
-  bulk: (questions) => request('POST', '/api/questions/bulk', { questions }),
-  update: (id, data) => request('PUT', `/api/questions/${id}`, data),
-  delete: (id) => request('DELETE', `/api/questions/${id}`)
+  get:    (id)       => request('GET',    `/api/questions/${id}`),
+  create: (data)     => request('POST',   '/api/questions', data),
+  bulk:   (questions)=> request('POST',   '/api/questions/bulk', { questions }),
+  update: (id, data) => request('PUT',    `/api/questions/${id}`, data),
+  delete: (id)       => request('DELETE', `/api/questions/${id}`)
 }
 
 // Sessions
 export const sessionsAPI = {
-  list: () => request('GET', '/api/sessions'),
-  get: (id) => request('GET', `/api/sessions/${id}`),
-  create: (data) => request('POST', '/api/sessions', data),
-  updateState: (id, data) => request('PATCH', `/api/sessions/${id}/state`, data),
-  updateStage: (id, stage, data) => request('PATCH', `/api/sessions/${id}/stage/${stage}`, data),
-  updateTeam: (id, teamKey, data) => request('PATCH', `/api/sessions/${id}/team/${teamKey}`, data),
-  delete: (id) => request('DELETE', `/api/sessions/${id}`)
+  list:       ()         => request('GET',    '/api/sessions'),
+  get:        (id)       => request('GET',    `/api/sessions/${id}`),
+  create:     (data)     => request('POST',   '/api/sessions', data),
+  delete:     (id)       => request('DELETE', `/api/sessions/${id}`),
+
+  // Generic patch — sends any fields to PATCH /api/sessions/:id/state
+  update: (id, data) => request('PATCH', `/api/sessions/${id}/state`, data),
+
+  // Update a specific team by its UUID (session_teams.id)
+  updateTeam: (teamId, data) => request('PATCH', `/api/sessions/team/${teamId}`, data),
 }
