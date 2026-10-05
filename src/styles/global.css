@@ -1,27 +1,50 @@
-/* ── Tokens ─────────────────────────────────────────────────── */
-:root {
-  --bg:       #0D0F1A;
-  --surface:  #1E2235;
-  --border:   #2E3456;
-  --gold:     #C9A84C;
-  --gold-dim: #8A6E2A;
-  --text:     #E8E2D5;
-  --muted:    #7B8BB5;
-  --danger:   #C94C4C;
-  --success:  #4CB87E;
-  --team1:    #4C8EC9;
-  --team2:    #C9784C;
+/* ══════════════════════════════════════════════════════════
+   اوجد الكنز — Design Tokens & Global Styles
+   Palette: deep midnight navy × burnished gold × jewel accents
+   ══════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
 
-  --radius:   10px;
-  --radius-sm: 6px;
-  --font: 'Cairo', system-ui, sans-serif;
+:root {
+  /* Backgrounds */
+  --bg:          #08091A;
+  --bg-mid:      #0E1128;
+  --surface:     #141830;
+  --surface-hi:  #1C2240;
+  --border:      #2A3160;
+  --border-hi:   #3D4880;
+
+  /* Gold palette */
+  --gold:        #D4A843;
+  --gold-light:  #F0CC6A;
+  --gold-dim:    #7A5E1F;
+  --gold-glow:   rgba(212,168,67,0.18);
+
+  /* Jewel accents */
+  --ruby:        #C94C6A;
+  --sapphire:    #4C82C9;
+  --emerald:     #3DAF7A;
+
+  /* Teams */
+  --team1:       #4C82C9;
+  --team2:       #C97B4C;
+
+  /* Text */
+  --text:        #EDE8DC;
+  --muted:       #6B7AA8;
+  --subtle:      #3D4880;
+
+  --radius:      12px;
+  --radius-sm:   7px;
+  --font:        'Cairo', system-ui, sans-serif;
+
+  /* Glow shadows */
+  --shadow-gold: 0 0 24px rgba(212,168,67,0.25);
+  --shadow-card: 0 4px 24px rgba(0,0,0,0.4);
 }
 
-/* ── Reset ──────────────────────────────────────────────────── */
+/* ── Reset ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { font-size: 16px; }
-
+html { font-size: 16px; scroll-behavior: smooth; }
 body {
   font-family: var(--font);
   background: var(--bg);
@@ -29,56 +52,95 @@ body {
   direction: rtl;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  /* Subtle star-field texture */
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(212,168,67,0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 75% 15%, rgba(212,168,67,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 55% 65%, rgba(212,168,67,0.15) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 80%, rgba(212,168,67,0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 55%, rgba(212,168,67,0.25) 0%, transparent 100%);
 }
 
-/* ── Typography ─────────────────────────────────────────────── */
-h1 { font-size: 2rem;   font-weight: 900; line-height: 1.2; }
-h2 { font-size: 1.5rem; font-weight: 700; line-height: 1.3; }
-h3 { font-size: 1.15rem;font-weight: 600; }
-p  { line-height: 1.7; color: var(--muted); }
+/* ── Typography ─────────────────────────────────────────── */
+h1 { font-size: 2rem;    font-weight: 900; line-height: 1.2; }
+h2 { font-size: 1.5rem;  font-weight: 700; line-height: 1.3; }
+h3 { font-size: 1.15rem; font-weight: 700; }
+p  { line-height: 1.7;   color: var(--muted); }
 
-/* ── Utility ────────────────────────────────────────────────── */
-.gold  { color: var(--gold); }
-.muted { color: var(--muted); }
+/* ── Gold divider ───────────────────────────────────────── */
+.gold-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  margin: 24px 0;
+  border: none;
+}
 
-/* ── Buttons ────────────────────────────────────────────────── */
+/* ── Buttons ────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: 10px 22px;
   border-radius: var(--radius-sm);
   font-family: var(--font);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   border: none;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: all 0.18s ease;
+  position: relative;
+  overflow: hidden;
 }
-.btn:active { transform: scale(0.97); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background 0.18s;
+}
+.btn:hover::after   { background: rgba(255,255,255,0.06); }
+.btn:active         { transform: scale(0.97); }
+.btn:disabled       { opacity: 0.4; cursor: not-allowed; }
 
-.btn-primary  { background: var(--gold);    color: #0D0F1A; }
-.btn-ghost    { background: transparent;    color: var(--text);  border: 1px solid var(--border); }
-.btn-danger   { background: var(--danger);  color: #fff; }
-.btn-success  { background: var(--success); color: #fff; }
+.btn-primary {
+  background: linear-gradient(135deg, var(--gold) 0%, #B8893A 100%);
+  color: #08091A;
+  box-shadow: 0 2px 16px rgba(212,168,67,0.35);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 24px rgba(212,168,67,0.55);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border-hi);
+}
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--gold-dim);
+  color: var(--gold-light);
+}
+.btn-danger  { background: var(--ruby);    color: #fff; }
+.btn-success { background: var(--emerald); color: #fff; }
 
-.btn-primary:hover:not(:disabled)  { opacity: 0.88; }
-.btn-ghost:hover:not(:disabled)    { border-color: var(--gold); color: var(--gold); }
-.btn-danger:hover:not(:disabled)   { opacity: 0.85; }
-
-/* ── Card ───────────────────────────────────────────────────── */
+/* ── Card ───────────────────────────────────────────────── */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 24px;
+  box-shadow: var(--shadow-card);
+}
+.card-gold {
+  border-color: var(--gold-dim);
+  box-shadow: var(--shadow-gold);
 }
 
-/* ── Input ──────────────────────────────────────────────────── */
+/* ── Inputs ─────────────────────────────────────────────── */
 .input, .select, .textarea {
   width: 100%;
-  background: var(--bg);
+  background: var(--bg-mid);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -86,56 +148,78 @@ p  { line-height: 1.7; color: var(--muted); }
   font-size: 0.95rem;
   padding: 10px 14px;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .input:focus, .select:focus, .textarea:focus {
-  border-color: var(--gold);
+  border-color: var(--gold-dim);
+  box-shadow: 0 0 0 3px var(--gold-glow);
 }
 .textarea { resize: vertical; min-height: 80px; }
+.select option { background: var(--surface); }
 
-/* ── Badge ──────────────────────────────────────────────────── */
+/* ── Badges ─────────────────────────────────────────────── */
 .badge {
   display: inline-flex;
   align-items: center;
-  padding: 3px 10px;
+  padding: 3px 11px;
   border-radius: 20px;
   font-size: 0.78rem;
-  font-weight: 600;
+  font-weight: 700;
 }
-.badge-easy   { background: rgba(76,184,126,.15); color: var(--success); }
-.badge-medium { background: rgba(201,168,76,.15);  color: var(--gold); }
-.badge-hard   { background: rgba(201,76,76,.15);   color: var(--danger); }
+.badge-easy   { background: rgba(61,175,122,.15); color: var(--emerald); }
+.badge-medium { background: rgba(212,168,67,.15);  color: var(--gold); }
+.badge-hard   { background: rgba(201,76,106,.15);  color: var(--ruby); }
 
-/* ── Toast ──────────────────────────────────────────────────── */
-.toast {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 24px;
-  font-weight: 600;
-  z-index: 9999;
-  animation: toastIn 0.2s ease;
+/* ── Gem decoration ─────────────────────────────────────── */
+.gem {
+  display: inline-block;
+  animation: gemSpin 6s linear infinite;
 }
-@keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(12px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+@keyframes gemSpin {
+  0%, 100% { transform: rotateY(0deg);   }
+  50%       { transform: rotateY(180deg); }
 }
 
-/* ── Scrollbar ──────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 6px; }
+/* ── Shimmer animation ──────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position:  400px 0; }
+}
+.shimmer-text {
+  background: linear-gradient(90deg, var(--gold-dim) 0%, var(--gold-light) 40%, var(--gold-dim) 80%);
+  background-size: 400px 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s linear infinite;
+}
+
+/* ── Float animation ─────────────────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+/* ── Pulse glow ─────────────────────────────────────────── */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 12px var(--gold-glow); }
+  50%       { box-shadow: 0 0 32px rgba(212,168,67,0.45); }
+}
+
+/* ── Scrollbar ──────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 4px; }
 
-/* ── Responsive ─────────────────────────────────────────────── */
+/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 768px) {
-  h1 { font-size: 1.5rem; }
-  h2 { font-size: 1.2rem; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
