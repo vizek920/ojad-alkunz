@@ -1,29 +1,24 @@
-.form { display: flex; flex-direction: column; gap: 14px; }
-.row2 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
-.field { display: flex; flex-direction: column; gap: 6px; }
-.field label { font-size: 0.83rem; color: var(--muted); font-weight: 600; }
-.optionsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.heading  { color: var(--gold-light); margin-bottom: 20px; }
+.count    { color: var(--muted); font-size: 1rem; font-weight: 400; }
+.formCard { margin-bottom: 20px; }
 
-.filters { display: flex; gap: 12px; margin-bottom: 16px; }
+.form     { display: flex; flex-direction: column; gap: 14px; }
+.twoCol   { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.optsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field    { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.85rem; font-weight: 700; color: var(--gold); }
 
-.list { display: flex; flex-direction: column; gap: 10px; }
-.qRow {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  justify-content: space-between;
-}
-.qBody { flex: 1; display: flex; flex-direction: column; gap: 6px; }
-.qText { font-size: 0.95rem; font-weight: 600; color: var(--text); line-height: 1.5; }
-.qMeta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.qActions { display: flex; gap: 8px; flex-shrink: 0; }
+.filters { display: flex; gap: 10px; margin-bottom: 16px; }
 
-@media (max-width: 768px) {
-  .row2 { grid-template-columns: 1fr 1fr; }
-  .filters { flex-wrap: wrap; }
-  .qRow { flex-direction: column; align-items: flex-start; }
+.list  { display: flex; flex-direction: column; gap: 10px; }
+.qCard { display: flex; flex-direction: column; gap: 8px; padding: 16px 18px; }
+.qTop  { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qType { font-size: 0.8rem; color: var(--muted); }
+.qCat  { font-size: 0.8rem; color: var(--sapphire); }
+.qPts  { font-size: 0.8rem; color: var(--gold); margin-right: auto; }
+.qText { font-size: 1rem; font-weight: 600; color: var(--text); }
+.qAnswer { font-size: 0.88rem; color: var(--emerald); }
+
+@media (max-width: 600px) {
+  .twoCol, .optsGrid { grid-template-columns: 1fr; }
 }
