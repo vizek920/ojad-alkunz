@@ -1,127 +1,214 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { sessionsAPI } from '../../lib/api'
-import s from './SessionsTab.module.css'
+/* ── Page heading ────────────────────────────────────────── */
+.heading {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: var(--gold);
+  margin: 0 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-const STATUS_LABEL = { waiting:'⏳ انتظار', active:'▶️ نشط', finished:'✅ منتهي' }
-const STATUS_CLASS = { waiting: s.tagWait, active: s.tagActive, finished: s.tagDone }
+/* ── Create card ─────────────────────────────────────────── */
+.createCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+}
+.createCard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--gold2), var(--gold), transparent);
+}
+.createTitle {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold2);
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
-export default function SessionsTab() {
-  const [sessions, setSessions] = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [creating, setCreating] = useState(false)
-  const [form, setForm] = useState({
-    event_name:  '',
-    team1_name:  'الفريق الأحمر',
-    team2_name:  'الفريق الأزرق',
-  })
+/* ── Form ────────────────────────────────────────────────── */
+.form { display: flex; flex-direction: column; gap: 16px; }
 
-  async function load() {
-    setLoading(true)
-    const data = await sessionsAPI.list()
-    setSessions(data || [])
-    setLoading(false)
-  }
-  useEffect(() => { load() }, [])
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
-  async function handleCreate(e) {
-    e.preventDefault()
-    if (!form.event_name.trim()) return
-    setCreating(true)
-    await sessionsAPI.create(form)
-    setForm({ event_name:'', team1_name:'الفريق الأحمر', team2_name:'الفريق الأزرق' })
-    await load()
-    setCreating(false)
-  }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--gold);
+}
+.input {
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.12);
+}
+.input::placeholder { color: var(--muted); }
 
-  return (
-    <div>
-      <h2 className={s.heading}>🎮 الجلسات</h2>
+.createBtn {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: var(--radius);
+  border: none;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #07050F;
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+  box-shadow: 0 4px 18px rgba(201,162,39,0.25);
+}
+.createBtn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+.createBtn:disabled { opacity: .5; cursor: not-allowed; }
 
-      {/* ── Create form ── */}
-      <div className={s.createCard}>
-        <p className={s.createTitle}>➕ جلسة جديدة</p>
-        <form onSubmit={handleCreate} className={s.form}>
-          <div className={s.field}>
-            <label>اسم الفعالية</label>
-            <input
-              className={s.input}
-              placeholder="مثال: مسابقة المدرسة ١٤٤٦"
-              required
-              value={form.event_name}
-              onChange={e => setForm({ ...form, event_name: e.target.value })}
-            />
-          </div>
-          <div className={s.twoCol}>
-            <div className={s.field}>
-              <label>اسم الفريق ١</label>
-              <input
-                className={s.input}
-                value={form.team1_name}
-                onChange={e => setForm({ ...form, team1_name: e.target.value })}
-              />
-            </div>
-            <div className={s.field}>
-              <label>اسم الفريق ٢</label>
-              <input
-                className={s.input}
-                value={form.team2_name}
-                onChange={e => setForm({ ...form, team2_name: e.target.value })}
-              />
-            </div>
-          </div>
-          <button type="submit" className={s.createBtn} disabled={creating}>
-            {creating ? <><span>⏳</span> جاري الإنشاء…</> : <><span>🚀</span> إنشاء الجلسة</>}
-          </button>
-        </form>
-      </div>
+/* ── List ────────────────────────────────────────────────── */
+.listHeading {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
 
-      {/* ── Sessions list ── */}
-      {loading ? (
-        <div className={s.empty}>
-          <span className={s.emptyIcon}>⏳</span>
-          <span>تحميل الجلسات…</span>
-        </div>
-      ) : sessions.length === 0 ? (
-        <div className={s.empty}>
-          <span className={s.emptyIcon}>🎮</span>
-          <span>لا توجد جلسات بعد، أنشئ أولى!</span>
-        </div>
-      ) : (
-        <>
-          <p className={s.listHeading}>الجلسات الحالية ({sessions.length})</p>
-          <div className={s.list}>
-            {sessions.map(sess => (
-              <div key={sess.id} className={s.sessCard}>
-                <div className={s.sessLeft}>
-                  <div className={s.sessRow}>
-                    <span className={`${s.tag} ${STATUS_CLASS[sess.status] || s.tagWait}`}>
-                      {STATUS_LABEL[sess.status] || sess.status}
-                    </span>
-                    <span className={s.sessName}>{sess.event_name}</span>
-                  </div>
-                  <div className={s.sessMeta}>
-                    <span className={s.sessSub}>المرحلة {sess.current_stage} / 15</span>
-                    {sess.team1_name && (
-                      <span className={s.sessTeams}>
-                        {sess.team1_name} ضد {sess.team2_name}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className={s.sessActions}>
-                  <Link className={s.btnControl} to={`/admin-kanz/sessions/${sess.id}/play`}>
-                    🕹️ تحكم
-                  </Link>
-                  <a className={s.btnScreen} href={`/screen/${sess.id}`} target="_blank" rel="noreferrer">
-                    📺 شاشة
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
+.list { display: flex; flex-direction: column; gap: 12px; }
+
+/* ── Session card ────────────────────────────────────────── */
+.sessCard {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  transition: border-color .2s, box-shadow .2s;
+}
+.sessCard:hover {
+  border-color: rgba(201,162,39,0.3);
+  box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+}
+
+.sessLeft { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; }
+
+.sessRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.sessName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sessMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.sessSub  { font-size: 0.82rem; color: var(--muted); }
+.sessTeams { font-size: 0.82rem; color: var(--muted); }
+
+/* ── Status badge ────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.tagWait   { background: rgba(122,110,138,.15); color: var(--muted); border: 1px solid rgba(122,110,138,.2); }
+.tagActive { background: rgba(201,162,39,.12);  color: var(--gold2); border: 1px solid rgba(201,162,39,.25); }
+.tagDone   { background: rgba(76,184,126,.12);  color: var(--success); border: 1px solid rgba(76,184,126,.25); }
+
+/* ── Actions ─────────────────────────────────────────────── */
+.sessActions { display: flex; gap: 8px; flex-shrink: 0; }
+
+.btnControl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #07050F;
+  font-size: 0.88rem;
+  font-weight: 800;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity .2s, transform .15s;
+  box-shadow: 0 3px 12px rgba(201,162,39,0.2);
+}
+.btnControl:hover { opacity: .9; transform: translateY(-1px); }
+
+.btnScreen {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.btnScreen:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+/* ── Empty / Loading ─────────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.emptyIcon { font-size: 3rem; opacity: .5; }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .twoCol { grid-template-columns: 1fr; }
+  .sessCard { flex-direction: column; align-items: flex-start; }
+  .sessActions { width: 100%; }
+  .btnControl, .btnScreen { flex: 1; justify-content: center; }
+  .createBtn { width: 100%; justify-content: center; }
 }
