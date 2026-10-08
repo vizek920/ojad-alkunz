@@ -7,9 +7,9 @@ import GameControl   from '../components/admin/GameControl'
 import s from './AdminPage.module.css'
 
 const NAV = [
-  { to: '/admin-kanz/sessions',   label: 'الجلسات',    icon: '🎮' },
-  { to: '/admin-kanz/questions',  label: 'الأسئلة',    icon: '❓' },
-  { to: '/admin-kanz/categories', label: 'الفئات',     icon: '📂' },
+  { to: '/admin-kanz/sessions',   label: 'الجلسات',   icon: '🎮' },
+  { to: '/admin-kanz/questions',  label: 'الأسئلة',   icon: '❓' },
+  { to: '/admin-kanz/categories', label: 'الفئات',    icon: '📂' },
 ]
 
 export default function AdminPage() {
@@ -23,11 +23,9 @@ export default function AdminPage() {
       {/* Sidebar */}
       <aside className={s.sidebar}>
         <div className={s.logo}>
-          <span className={s.logoIcon}>🏺</span>
-          <span className="shimmer-text" style={{fontSize:'1.1rem',fontWeight:900}}>اوجد الكنز</span>
+          <span className={s.logoIcon}>💎</span>
+          <span className={s.logoText}>اوجد الكنز</span>
         </div>
-
-        <hr className="gold-line" style={{margin:'12px 0'}} />
 
         <nav className={s.nav}>
           {NAV.map(n => (
@@ -43,8 +41,8 @@ export default function AdminPage() {
         </nav>
 
         <div className={s.sidebarBottom}>
-          <button className="btn btn-ghost" style={{width:'100%',justifyContent:'center'}} onClick={handleLogout}>
-            🚪 خروج
+          <button className={s.logoutBtn} onClick={handleLogout}>
+            <span>🚪</span> خروج
           </button>
         </div>
       </aside>
