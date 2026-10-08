@@ -1,31 +1,68 @@
+/* ── Variables ───────────────────────────────────────────── */
+:root {
+  --bg:         #07050F;
+  --surface:    #110E1E;
+  --surface2:   #1A1630;
+  --border:     #2A2045;
+  --text:       #E8E2D9;
+  --muted:      #7A6E8A;
+  --gold:       #C9A227;
+  --gold2:      #E8C547;
+  --gold-glow:  rgba(201,162,39,0.12);
+  --gold-dim:   rgba(201,162,39,0.25);
+  --radius:     12px;
+}
+
+/* ── Layout ──────────────────────────────────────────────── */
 .layout {
   display: flex;
   min-height: 100vh;
+  background: var(--bg);
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  direction: rtl;
 }
 
 /* ── Sidebar ─────────────────────────────────────────────── */
 .sidebar {
-  width: 220px;
+  width: 230px;
   flex-shrink: 0;
   background: var(--surface);
   border-left: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
+/* ── Logo ────────────────────────────────────────────────── */
 .logo {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 4px 6px 10px;
+  padding: 6px 8px 14px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 12px;
 }
-.logoIcon { font-size: 1.8rem; animation: bob 3s ease-in-out infinite; }
+.logoIcon { font-size: 1.9rem; animation: bob 3s ease-in-out infinite; }
 @keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-4px); }
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-5px); }
 }
+.logoText {
+  font-size: 1.15rem;
+  font-weight: 900;
+  background: linear-gradient(90deg, var(--gold), var(--gold2), var(--gold));
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimBar 3s linear infinite;
+}
+@keyframes shimBar { from{background-position:200%} to{background-position:0%} }
 
+/* ── Nav ─────────────────────────────────────────────────── */
 .nav {
   display: flex;
   flex-direction: column;
@@ -37,20 +74,54 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 11px 13px;
   border-radius: 10px;
   text-decoration: none;
   color: var(--muted);
   font-size: 0.95rem;
   font-weight: 600;
-  transition: all 0.15s;
+  transition: background .15s, color .15s;
+  border: 1px solid transparent;
 }
-.navItem:hover { background: var(--surface-hi); color: var(--text); }
-.navActive    { background: var(--gold-glow) !important; color: var(--gold-light) !important; border: 1px solid var(--gold-dim); }
+.navItem:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+}
+.navActive {
+  background: var(--gold-glow) !important;
+  color: var(--gold2) !important;
+  border-color: var(--gold-dim) !important;
+}
+.navIcon { font-size: 1.15rem; flex-shrink: 0; }
 
-.navIcon { font-size: 1.1rem; }
-
-.sidebarBottom { padding-top: 12px; }
+/* ── Sidebar bottom ──────────────────────────────────────── */
+.sidebarBottom {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+}
+.logoutBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.logoutBtn:hover {
+  background: rgba(224,85,85,0.1);
+  color: #e05555;
+  border-color: rgba(224,85,85,0.3);
+}
 
 /* ── Main ────────────────────────────────────────────────── */
 .main {
@@ -58,13 +129,25 @@
   overflow-y: auto;
   padding: 28px 32px;
   background: var(--bg);
+  min-height: 100vh;
 }
 
+/* ── Mobile ──────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  .layout { flex-direction: column; }
-  .sidebar { width: 100%; flex-direction: row; flex-wrap: wrap; padding: 12px; gap: 8px; }
-  .logo { flex: 0 0 auto; }
-  .nav  { flex-direction: row; flex: 1; }
-  .sidebarBottom { flex: 0 0 auto; }
-  .main { padding: 16px; }
+  .layout   { flex-direction: column; }
+  .sidebar  {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 6px;
+    align-items: center;
+  }
+  .logo         { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .nav          { flex-direction: row; flex: 1; flex-wrap: wrap; }
+  .navItem      { padding: 8px 10px; font-size: 0.85rem; }
+  .sidebarBottom{ border-top: none; margin-top: 0; padding-top: 0; }
+  .main         { padding: 14px 16px; }
 }
