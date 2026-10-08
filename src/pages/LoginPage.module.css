@@ -1,101 +1,254 @@
+/* ── Variables ───────────────────────────────────────────── */
+:root {
+  --bg:      #07050F;
+  --surface: #110E1E;
+  --border:  #2A2045;
+  --text:    #E8E2D9;
+  --muted:   #7A6E8A;
+  --gold:    #C9A227;
+  --gold2:   #E8C547;
+  --radius:  14px;
+}
+
+/* ── Page ────────────────────────────────────────────────── */
 .page {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--bg);
+  font-family: 'Cairo', 'Tajawal', sans-serif;
+  direction: rtl;
   position: relative;
   overflow: hidden;
 }
 
-/* Floating gem decorations */
-.gem1, .gem2, .gem3, .gem4, .gem5 {
-  position: absolute;
-  font-size: 2rem;
-  opacity: 0.18;
-  animation: float 6s ease-in-out infinite;
-  pointer-events: none;
-}
-.gem1 { top: 10%;  left: 8%;   animation-delay: 0s;   font-size: 2.4rem; }
-.gem2 { top: 20%;  right: 12%; animation-delay: 1.2s; font-size: 1.6rem; }
-.gem3 { bottom: 25%; left: 15%; animation-delay: 2.1s; font-size: 2rem; }
-.gem4 { top: 60%;  right: 8%;  animation-delay: 0.7s; font-size: 1.4rem; }
-.gem5 { bottom: 12%; right: 22%; animation-delay: 3s;  font-size: 2.2rem; }
-
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(0deg); }
-  50%       { transform: translateY(-18px) rotate(8deg); }
-}
-
-/* Login box */
-.box {
-  background: var(--surface);
-  border: 1px solid var(--gold-dim);
-  border-radius: 20px;
-  padding: 48px 40px;
+/* ── Particle canvas ─────────────────────────────────────── */
+.canvas {
+  position: fixed;
+  inset: 0;
   width: 100%;
-  max-width: 420px;
-  box-shadow: 0 0 60px rgba(212,168,67,0.12), 0 8px 40px rgba(0,0,0,0.5);
-  text-align: center;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Ambient orbs ────────────────────────────────────────── */
+.orb1, .orb2 {
+  position: fixed;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  filter: blur(80px);
+}
+.orb1 {
+  width: 400px; height: 400px;
+  background: rgba(201,162,39,0.08);
+  top: -100px; right: -100px;
+  animation: orbDrift 8s ease-in-out infinite alternate;
+}
+.orb2 {
+  width: 300px; height: 300px;
+  background: rgba(76,158,232,0.06);
+  bottom: -80px; left: -80px;
+  animation: orbDrift 11s ease-in-out infinite alternate-reverse;
+}
+@keyframes orbDrift {
+  from { transform: translate(0,0); }
+  to   { transform: translate(40px, 30px); }
+}
+
+/* ── Card ────────────────────────────────────────────────── */
+.card {
   position: relative;
   z-index: 1;
-  animation: appear 0.45s cubic-bezier(0.175,0.885,0.32,1.275) both;
+  width: 100%;
+  max-width: 400px;
+  margin: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 36px 32px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  box-shadow:
+    0 0 0 1px rgba(201,162,39,0.08),
+    0 8px 40px rgba(0,0,0,0.6),
+    0 0 80px rgba(201,162,39,0.05);
+  animation: cardIn .5s cubic-bezier(.36,1.4,.64,1) both;
+}
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(30px) scale(.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes appear {
-  from { opacity: 0; transform: translateY(30px) scale(0.95); }
-  to   { opacity: 1; transform: translateY(0)     scale(1); }
+/* shake on wrong password */
+.shake { animation: shake .55s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes shake {
+  10%,90% { transform: translateX(-3px); }
+  20%,80% { transform: translateX(5px); }
+  30%,50%,70% { transform: translateX(-5px); }
+  40%,60% { transform: translateX(5px); }
 }
 
-.icon {
-  font-size: 4rem;
-  margin-bottom: 12px;
-  animation: iconBob 3s ease-in-out infinite;
-  display: block;
+/* ── Top glow bar ────────────────────────────────────────── */
+.topBar {
+  position: absolute;
+  top: 0; left: 20px; right: 20px;
+  height: 2px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--gold2), var(--gold), transparent);
+  background-size: 200%;
+  animation: shimBar 3s linear infinite;
 }
-@keyframes iconBob {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50%       { transform: translateY(-6px) scale(1.05); }
-}
+@keyframes shimBar { from{background-position:200%} to{background-position:0%} }
 
+/* ── Logo ────────────────────────────────────────────────── */
+.logoWrap { margin-bottom: 16px; margin-top: 4px; }
+.logoRing {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: rgba(201,162,39,0.1);
+  border: 2px solid rgba(201,162,39,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(201,162,39,0.25);
+  animation: ringPulse 3s ease-in-out infinite;
+}
+@keyframes ringPulse {
+  0%,100% { box-shadow: 0 0 20px rgba(201,162,39,.2); }
+  50%     { box-shadow: 0 0 40px rgba(201,162,39,.45); }
+}
+.logoIcon { font-size: 2.4rem; line-height: 1; }
+
+/* ── Title / subtitle ────────────────────────────────────── */
 .title {
-  font-size: 2.2rem;
+  font-size: 1.9rem;
   font-weight: 900;
-  margin-bottom: 4px;
+  margin: 0 0 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold2), var(--gold));
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimBar 3s linear infinite;
 }
-
 .subtitle {
+  font-size: 0.9rem;
   color: var(--muted);
-  font-size: 0.95rem;
-  margin-bottom: 0;
-  line-height: 1;
+  margin: 0 0 18px;
 }
 
+/* ── Divider ─────────────────────────────────────────────── */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: var(--border);
+  margin-bottom: 20px;
+}
+
+/* ── Form ────────────────────────────────────────────────── */
 .form {
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.fieldWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.fieldIcon {
+  position: absolute;
+  right: 14px;
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 1;
+}
+.input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 13px 44px 13px 16px;
+  font-size: 1rem;
+  font-family: inherit;
+  color: var(--text);
+  direction: ltr;
   text-align: right;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+  box-sizing: border-box;
 }
+.input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.15);
+}
+.input::placeholder { color: var(--muted); direction: rtl; }
 
-.label {
+/* ── Error ───────────────────────────────────────────────── */
+.errorBox {
+  background: rgba(224,85,85,0.1);
+  border: 1px solid rgba(224,85,85,0.35);
+  border-radius: 10px;
+  padding: 10px 14px;
   font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--gold-light);
+  color: #e05555;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.error {
-  background: rgba(201,76,106,0.12);
-  border: 1px solid var(--ruby);
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
-  color: var(--ruby);
-  text-align: center;
+/* ── Button ──────────────────────────────────────────────── */
+.btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius);
+  border: none;
+  background: linear-gradient(135deg, var(--gold), var(--gold2));
+  color: #07050F;
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: opacity .2s, transform .15s, box-shadow .2s;
+  box-shadow: 0 4px 20px rgba(201,162,39,0.3);
+}
+.btn:hover:not(:disabled) {
+  opacity: .92;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 28px rgba(201,162,39,0.45);
+}
+.btn:active:not(:disabled) { transform: translateY(0); }
+.btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
 }
 
+/* ── Spinner ─────────────────────────────────────────────── */
+.spinner {
+  display: inline-block;
+  width: 16px; height: 16px;
+  border: 2px solid rgba(7,5,15,0.3);
+  border-top-color: #07050F;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Hint ────────────────────────────────────────────────── */
 .hint {
-  margin-top: 20px;
+  margin-top: 16px;
   font-size: 0.8rem;
-  color: var(--subtle);
+  color: var(--muted);
   text-align: center;
 }
