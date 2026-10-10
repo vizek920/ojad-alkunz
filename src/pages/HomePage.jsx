@@ -118,7 +118,7 @@ function SessionCard({ session, onClick }) {
     <button className={styles.sessionCard} onClick={onClick} dir="rtl">
       <div className={styles.cardGlow} />
       <div className={styles.cardHeader}>
-        <span className={styles.cardTitle}>{session.title || 'جلسة بدون اسم'}</span>
+        <span className={styles.cardTitle}>{session.name || session.title || 'جلسة بدون اسم'}</span>
         <span className={styles.cardBadge}>نشطة</span>
       </div>
       <div className={styles.cardStats}>
@@ -135,7 +135,7 @@ function SessionCard({ session, onClick }) {
 // ─── Create Session Modal ────────────────────────────────────────────────────
 function CreateModal({ onClose, onCreated }) {
   const [form, setForm] = useState({
-    title: '',
+    name: '',
     password: '',
     is_private: false,
     max_viewers: 50,
@@ -145,13 +145,13 @@ function CreateModal({ onClose, onCreated }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.title.trim()) return setError('أدخل اسم الجلسة');
+    if (!form.name.trim()) return setError('أدخل اسم الجلسة');
     if (!form.password.trim()) return setError('أدخل كلمة مرور الجلسة');
     setLoading(true);
     setError('');
     try {
       const result = await createSession(form);
-      onCreated(result);
+      onCreated(result.session || result);
     } catch (err) {
       setError(err.message || 'حدث خطأ');
     } finally {
@@ -171,8 +171,8 @@ function CreateModal({ onClose, onCreated }) {
         <input
           className={styles.input}
           placeholder="مثال: مسابقة الصف الثالث"
-          value={form.title}
-          onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+          value={form.name}
+          onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
         />
 
         <label className={styles.label}>كلمة المرور (للمضيف)</label>
@@ -225,8 +225,8 @@ function JoinModal({ onClose, onJoined }) {
     setLoading(true);
     setError('');
     try {
-      const session = await fetchSessionByCode(clean);
-      onJoined(session);
+      const data = await fetchSessionByCode(clean);
+      onJoined(data.session || data);
     } catch (err) {
       setError('الرمز غير صحيح أو الجلسة منتهية');
     } finally {
@@ -336,7 +336,6 @@ export default function HomePage() {
   }
 
   function handleGoToSession(session) {
-    // Go to GameControl (admin view) with the session
     navigate(`/session/${session.id}`, { state: { session, isHost: true } });
   }
 
